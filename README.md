@@ -122,12 +122,22 @@ Get a single record
 (so->get "Account" "001i0000007nAs3" auth-info)
 ;; Fetch only the name and website attributes
 (so->get "Account" "001i0000007nAs3" ["Name" "Website"] auth-info))
+;; Fetch using external id field
+(so->get "Account" {:ext_field "123"} auth-info)
 ```
 
 Create a record
 
 ```clojure
 (so->create "Account" {:Name "My Account"} auth-info)
+```
+
+Upsert a record
+
+```clojure
+(so->update "Account" {:Name "My Updated Account "} "001i0000008Ge2OAAS" auth-info)
+;; upsert using external id field
+(so->update "Account" {:Name "My Updated Account "} {:ext_field "123"} auth-info)
 ```
 
 Delete a record

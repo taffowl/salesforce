@@ -150,18 +150,21 @@
   "Fetch a single SObject or passing in a vector of attributes
    return a subset of the data"
   ([sobject identifier fields token]
-     (when (or (seq? fields) (vector? fields))
-       (let [params (->> (into [] (interpose "," fields))
-                         (str/join)
-                         (conj ["?fields="])
-                         (apply str))
-             uri (format "/services/data/v%s/sobjects/%s/%s%s"
-                   @+version+ sobject identifier params)
-             response (request :get uri token)]
-         (dissoc response :attributes))))
-  ([sobject identifier token]
-    (request :get
-     (format "/services/data/v%s/sobjects/%s/%s" @+version+ sobject identifier) token)))
+   (let [path "/services/data/v%s/sobjects/%s/%s"
+         external-field (when (map? identifier) (-> identifier keys first name (str "__c")))
+         id (if external-field (-> identifier vals first) identifier)
+         uri (str path (if external-field "/%s%s" "%s"))
+         params (if (sequential? fields)
+                  (->> fields
+                       (map name)
+                       (interpose ",")
+                       (apply str "?fields="))
+                  "")]
+     (dissoc (request :get (apply format uri
+                                  (if external-field
+                                    [@+version+ sobject external-field id params]
+                                    [@+version+ sobject id params])) token)
+             :attributes))))
 
 (comment
   ;; Fetch all the info
@@ -181,38 +184,46 @@
 (defn so->create
   "Create a new record"
   [sobject record token]
-  (let [params
-    { :form-params record
-      :content-type :json }]
-    (request :post
-      (format "/services/data/v%s/sobjects/%s/" @+version+ sobject) token params)))
+   (let [params
+         {:form-params  record
+          :content-type :json}]
+     (request :post
+              (format "/services/data/v%s/sobjects/%s/" @+version+ sobject) token params)))
 
 (comment
-  (so->create "Account" {:Name "My new account"} auth))
+    (so->create "Account" {:Name "My new account"} auth))
 
-(defn so->update 
+(defn so->update
   "Update a record
    - sojbect the name of the object i.e Account
-   - identifier the object id
+   - identifier the object id or a map of the external field id and value
    - record map of data to update object with
    - token your api auth info"
-  [sobject identifier record token]
-  (let [params
-    { :body (json/generate-string record)
-      :content-type :json }]
-    (request :patch
-      (format "/services/data/v%s/sobjects/%s/%s" @+version+ sobject identifier) 
-      token params)))
+  ([sobject identifier record token]
+   (let [params
+         {:body         (json/generate-string record)
+          :content-type :json}]
+     (if (map? identifier)
+       (request :patch
+                (format "/services/data/v%s/sobjects/%s/%s/%s" @+version+ sobject (-> identifier keys first name (str "__c")) (-> identifier vals first))
+                token params)
+       (request :patch
+                (format "/services/data/v%s/sobjects/%s/%s" @+version+ sobject identifier)
+                token params)))))
 
 (defn so->delete
   "Delete a record
    - sojbect the name of the object i.e Account
-   - identifier the object id
+   - identifier the object id or a map of the external field id and value
    - token your api auth info"
   [sobject identifier token]
-  (request :delete
-    (format "/services/data/v%s/sobjects/%s/%s" @+version+ sobject identifier)
-    token))
+  (if (map? identifier)
+    (request :delete
+             (format "/services/data/v%s/sobjects/%s/%s/%s" @+version+ sobject (-> identifier keys first name (str "__c")) (-> identifier vals first))
+             token)
+    (request :delete
+             (format "/services/data/v%s/sobjects/%s/%s" @+version+ sobject identifier)
+             token)))
 
 (comment
   (so->delete "Account" "001i0000008Ge2OAAS" auth))
