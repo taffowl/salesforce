@@ -12,7 +12,7 @@ http://www.salesforce.com/us/developer/docs/api_rest/
 It is available from Clojars. : )
 
 ```
-[salesforce "1.0.1"]
+[salesforce "1.0.2"]
 ```
 
 ## Usage
@@ -119,11 +119,11 @@ Get a single record
 
 ```clojure
 ;; Fetch all the info
-(so->get "Account" "001i0000007nAs3" auth-info)
+(so->get "Account" "001i0000007nAs3" nil auth-info)
 ;; Fetch only the name and website attributes
 (so->get "Account" "001i0000007nAs3" ["Name" "Website"] auth-info))
 ;; Fetch using external id field
-(so->get "Account" {:ext_field "123"} auth-info)
+(so->get "Account" {:ext_field "123"} nil auth-info)
 ```
 
 Create a record
