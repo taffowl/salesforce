@@ -11,9 +11,8 @@ http://www.salesforce.com/us/developer/docs/api_rest/
 
 It is available from Clojars. : )
 
-```
-[salesforce "1.0.4"]
-```
+[![clojars version](https://clojars.org/org.clojars.taffowl/salesforce/latest-version.svg?raw=true)]
+(https://clojars.org/org.clojars.taffowl/salesforce)
 
 ## Usage
 
